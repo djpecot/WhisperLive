@@ -3,14 +3,14 @@ document.addEventListener("DOMContentLoaded", function () {
   const startButton = document.getElementById("startCapture");
   const stopButton = document.getElementById("stopCapture");
 
-  const useServerCheckbox = document.getElementById("useServerCheckbox");
-  const useVadCheckbox = document.getElementById("useVadCheckbox");
-  const languageDropdown = document.getElementById('languageDropdown');
-  const taskDropdown = document.getElementById('taskDropdown');
-  const modelSizeDropdown = document.getElementById('modelSizeDropdown');
-  let selectedLanguage = null;
-  let selectedTask = taskDropdown.value;
-  let selectedModelSize = modelSizeDropdown.value;
+  // const useServerCheckbox = document.getElementById("useServerCheckbox");
+  // const useVadCheckbox = document.getElementById("useVadCheckbox");
+  // const languageDropdown = document.getElementById('languageDropdown');
+  // const taskDropdown = document.getElementById('taskDropdown');
+  // const modelSizeDropdown = document.getElementById('modelSizeDropdown');
+  // let selectedLanguage = null;
+  // let selectedTask = taskDropdown.value;
+  // let selectedModelSize = modelSizeDropdown.value;
 
   // Add click event listeners to the buttons
   startButton.addEventListener("click", startCapture);
@@ -25,39 +25,39 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // Retrieve checkbox state from storage on popup open
-  chrome.storage.local.get("useServerState", ({ useServerState }) => {
-    if (useServerState !== undefined) {
-      useServerCheckbox.checked = useServerState;
-    }
-  });
+  // // Retrieve checkbox state from storage on popup open
+  // chrome.storage.local.get("useServerState", ({ useServerState }) => {
+  //   if (useServerState !== undefined) {
+  //     useServerCheckbox.checked = useServerState;
+  //   }
+  // });
 
-  chrome.storage.local.get("useVadState", ({ useVadState }) => {
-    if (useVadState !== undefined) {
-      useVadCheckbox.checked = useVadState;
-    }
-  });
+  // chrome.storage.local.get("useVadState", ({ useVadState }) => {
+  //   if (useVadState !== undefined) {
+  //     useVadCheckbox.checked = useVadState;
+  //   }
+  // });
 
-  chrome.storage.local.get("selectedLanguage", ({ selectedLanguage: storedLanguage }) => {
-    if (storedLanguage !== undefined) {
-      languageDropdown.value = storedLanguage;
-      selectedLanguage = storedLanguage;
-    }
-  });
+  // chrome.storage.local.get("selectedLanguage", ({ selectedLanguage: storedLanguage }) => {
+  //   if (storedLanguage !== undefined) {
+  //     languageDropdown.value = storedLanguage;
+  //     selectedLanguage = storedLanguage;
+  //   }
+  // });
 
-  chrome.storage.local.get("selectedTask", ({ selectedTask: storedTask }) => {
-    if (storedTask !== undefined) {
-      taskDropdown.value = storedTask;
-      selectedTask = storedTask;
-    }
-  });
+  // chrome.storage.local.get("selectedTask", ({ selectedTask: storedTask }) => {
+  //   if (storedTask !== undefined) {
+  //     taskDropdown.value = storedTask;
+  //     selectedTask = storedTask;
+  //   }
+  // });
 
-  chrome.storage.local.get("selectedModelSize", ({ selectedModelSize: storedModelSize }) => {
-    if (storedModelSize !== undefined) {
-      modelSizeDropdown.value = storedModelSize;
-      selectedModelSize = storedModelSize;
-    }
-  });
+  // chrome.storage.local.get("selectedModelSize", ({ selectedModelSize: storedModelSize }) => {
+  //   if (storedModelSize !== undefined) {
+  //     modelSizeDropdown.value = storedModelSize;
+  //     selectedModelSize = storedModelSize;
+  //   }
+  // });
 
   // Function to handle the start capture button click event
   async function startCapture() {
@@ -112,55 +112,55 @@ document.addEventListener("DOMContentLoaded", function () {
   function toggleCaptureButtons(isCapturing) {
     startButton.disabled = isCapturing;
     stopButton.disabled = !isCapturing;
-    useServerCheckbox.disabled = isCapturing;
-    useVadCheckbox.disabled = isCapturing;
-    modelSizeDropdown.disabled = isCapturing;
-    languageDropdown.disabled = isCapturing;
-    taskDropdown.disabled = isCapturing; 
+    // useServerCheckbox.disabled = isCapturing;
+    // useVadCheckbox.disabled = isCapturing;
+    // modelSizeDropdown.disabled = isCapturing;
+    // languageDropdown.disabled = isCapturing;
+    // taskDropdown.disabled = isCapturing; 
     startButton.classList.toggle("disabled", isCapturing);
     stopButton.classList.toggle("disabled", !isCapturing);
   }
 
-  // Save the checkbox state when it's toggled
-  useServerCheckbox.addEventListener("change", () => {
-    const useServerState = useServerCheckbox.checked;
-    chrome.storage.local.set({ useServerState });
-  });
+  // // Save the checkbox state when it's toggled
+  // useServerCheckbox.addEventListener("change", () => {
+  //   const useServerState = useServerCheckbox.checked;
+  //   chrome.storage.local.set({ useServerState });
+  // });
 
-  useVadCheckbox.addEventListener("change", () => {
-    const useVadState = useVadCheckbox.checked;
-    chrome.storage.local.set({ useVadState });
-  });
+  // useVadCheckbox.addEventListener("change", () => {
+  //   const useVadState = useVadCheckbox.checked;
+  //   chrome.storage.local.set({ useVadState });
+  // });
 
-  languageDropdown.addEventListener('change', function() {
-    if (languageDropdown.value === "") {
-      selectedLanguage = null;
-    } else {
-      selectedLanguage = languageDropdown.value;
-    }
-    chrome.storage.local.set({ selectedLanguage });
-  });
+  // languageDropdown.addEventListener('change', function() {
+  //   if (languageDropdown.value === "") {
+  //     selectedLanguage = null;
+  //   } else {
+  //     selectedLanguage = languageDropdown.value;
+  //   }
+  //   chrome.storage.local.set({ selectedLanguage });
+  // });
 
-  taskDropdown.addEventListener('change', function() {
-    selectedTask = taskDropdown.value;
-    chrome.storage.local.set({ selectedTask });
-  });
+  // taskDropdown.addEventListener('change', function() {
+  //   selectedTask = taskDropdown.value;
+  //   chrome.storage.local.set({ selectedTask });
+  // });
 
-  modelSizeDropdown.addEventListener('change', function() {
-    selectedModelSize = modelSizeDropdown.value;
-    chrome.storage.local.set({ selectedModelSize });
-  });
+  // modelSizeDropdown.addEventListener('change', function() {
+  //   selectedModelSize = modelSizeDropdown.value;
+  //   chrome.storage.local.set({ selectedModelSize });
+  // });
 
-  chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
-    if (request.action === "updateSelectedLanguage") {
-      const detectedLanguage = request.detectedLanguage;
+  // chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+  //   if (request.action === "updateSelectedLanguage") {
+  //     const detectedLanguage = request.detectedLanguage;
   
-      if (detectedLanguage) {
-        languageDropdown.value = detectedLanguage;
-        chrome.storage.local.set({ selectedLanguage: detectedLanguage });
-      }
-    }
-  });
+  //     if (detectedLanguage) {
+  //       languageDropdown.value = detectedLanguage;
+  //       chrome.storage.local.set({ selectedLanguage: detectedLanguage });
+  //     }
+  //   }
+  // });
 
   chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     if (request.action === "toggleCaptureButtons") {
