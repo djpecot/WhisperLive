@@ -130,42 +130,35 @@ async function getTab(tabId) {
  * @returns {Promise<void>} - A Promise that resolves when the capture process is started successfully.
  */
 async function startCapture(options) {
-  const { tabId } = options;
+  const { tabId, revAiToken } = options;
   const optionTabId = await getLocalStorageValue("optionTabId");
   if (optionTabId) {
-    await removeChromeTab(optionTabId);
+      await removeChromeTab(optionTabId);
   }
 
   try {
-    const currentTab = await getTab(tabId);
-    if (currentTab.audible) {
-      await setLocalStorageValue("currentTabId", currentTab.id);
-      await executeScriptInTab(currentTab.id, "content.js");
-      await delayExecution(500);
+      const currentTab = await getTab(tabId);
+      if (currentTab.audible) {
+          await setLocalStorageValue("currentTabId", currentTab.id);
+          await executeScriptInTab(currentTab.id, "content.js");
+          await delayExecution(500);
 
-      const optionTab = await openExtensionOptions();
+          const optionTab = await openExtensionOptions();
+          await setLocalStorageValue("optionTabId", optionTab.id);
+          await delayExecution(500);
 
-      await setLocalStorageValue("optionTabId", optionTab.id);
-      await delayExecution(500);
-
-      await sendMessageToTab(optionTab.id, {
-        type: "start_capture",
-        data: { 
-          currentTabId: currentTab.id, 
-          host: options.host, 
-          port: options.port, 
-          multilingual: options.useMultilingual,
-          language: options.language,
-          task: options.task,
-          modelSize: options.modelSize,
-          useVad: options.useVad,
-        },
-      });
-    } else {
-      console.log("No Audio");
-    }
+          await sendMessageToTab(optionTab.id, {
+              type: "start_capture",
+              data: { 
+                  currentTabId: currentTab.id,
+                  revAiToken: revAiToken
+              },
+          });
+      } else {
+          console.log("No Audio");
+      }
   } catch (error) {
-    console.error("Error occurred while starting capture:", error);
+      console.error("Error occurred while starting capture:", error);
   }
 }
 
@@ -195,8 +188,12 @@ async function stopCapture() {
 chrome.runtime.onMessage.addListener(async (message) => {
   if (message.action === "startCapture") {
     startCapture(message);
+    // sendResponse({status: "started"});
+    return true
   } else if (message.action === "stopCapture") {
     stopCapture();
+    // sendResponse({status: "stopped"});
+    return true;
   } else if (message.action === "updateSelectedLanguage") {
     const detectedLanguage = message.detectedLanguage;
     chrome.runtime.sendMessage({ action: "updateSelectedLanguage", detectedLanguage });

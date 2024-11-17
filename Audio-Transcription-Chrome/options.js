@@ -16,7 +16,6 @@ function captureTabAudio() {
   });
 }
 
-
 /**
  * Sends a message to a specific tab in Google Chrome.
  * @param {number} tabId - The ID of the tab to send the message to.
@@ -30,7 +29,6 @@ function sendMessageToTab(tabId, data) {
     });
   });
 }
-
 
 /**
  * Resamples the audio data to a target sample rate of 16kHz.
@@ -76,80 +74,40 @@ function generateUUID() {
   return uuid;
 }
 
-
-/**
- * Starts recording audio from the captured tab.
- * @param {Object} option - The options object containing the currentTabId.
- */
 async function startRecord(option) {
   const stream = await captureTabAudio();
   const uuid = generateUUID();
 
   if (stream) {
-    // call when the stream inactive
     stream.oninactive = () => {
       window.close();
     };
-    const socket = new WebSocket(`ws://${option.host}:${option.port}/`);
-    let isServerReady = false;
-    let language = option.language;
-    socket.onopen = function(e) { 
-      socket.send(
-        JSON.stringify({
-          uid: uuid,
-          language: option.language,
-          task: option.task,
-          model: option.modelSize,
-          use_vad: option.useVad
-        })
+
+    // Modified WebSocket connection for Rev AI
+    const socket = new WebSocket(
+      `wss://api.rev.ai/speechtotext/v1/stream?` +
+      `access_token=${'02YNHWnpptcf8S8gntcfKVdpO9aIMtTm1D2guAlsSzEJRbKZF0CGU7gIJsgHnY6nI4yi230f1wKfPFgaqo6jV4VQLOgC8'}&` +
+      `content_type=audio/x-raw;layout=interleaved;rate=16000;format=S16LE;channels=1`
       );
+
+    console.log('WebSocket connection created');
+
+    let isServerReady = false;
+
+    socket.onopen = function(e) {
+        isServerReady = true;
+        console.log('WebSocket connection opened');
     };
 
     socket.onmessage = async (event) => {
       const data = JSON.parse(event.data);
-      if (data["uid"] !== uuid)
-        return;
-      
-      if (data["status"] === "WAIT"){
-        await sendMessageToTab(option.currentTabId, {
-          type: "showWaitPopup",
-          data: data["message"],
-        });
-        chrome.runtime.sendMessage({ action: "toggleCaptureButtons", data: false }) 
-        chrome.runtime.sendMessage({ action: "stopCapture" })
-        return;
+    
+      if (data.type === "partial" || data.type === "final") {
+        const transcribedText = data.elements.map(element => element.value).join(" ");
+        updateTranscriptionUI(transcribedText);
       }
-        
-      if (isServerReady === false){
-        isServerReady = true;
-        return;
-      }
-      
-      if (language === null) {
-        language = data["language"];
-        
-        // send message to popup.js to update dropdown
-        // console.log(language);
-        chrome.runtime.sendMessage({
-          action: "updateSelectedLanguage",
-          detectedLanguage: language,
-        });
-
-        return;
-      }
-
-      if (data["message"] === "DISCONNECT"){
-        chrome.runtime.sendMessage({ action: "toggleCaptureButtons", data: false })        
-        return;
-      }
-
-      res = await sendMessageToTab(option.currentTabId, {
-        type: "transcript",
-        data: event.data,
-      });
     };
 
-    
     const audioDataCache = [];
     const context = new AudioContext();
     const mediaStream = context.createMediaStreamSource(stream);
@@ -157,20 +115,24 @@ async function startRecord(option) {
 
     recorder.onaudioprocess = async (event) => {
       if (!context || !isServerReady) return;
-
+      
       const inputData = event.inputBuffer.getChannelData(0);
       const audioData16kHz = resampleTo16kHZ(inputData, context.sampleRate);
-
+      
+      // Convert Float32Array to Int16Array
+      const audioDataInt16 = new Int16Array(audioData16kHz.length);
+      for (let i = 0; i < audioData16kHz.length; i++) {
+        const s = Math.max(-1, Math.min(1, audioData16kHz[i]));
+        audioDataInt16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+      }
+      
       audioDataCache.push(inputData);
-
-      socket.send(audioData16kHz);
+      socket.send(audioDataInt16.buffer);
+      console.log('Audio data sent to server');
     };
-
-    // Prevent page mute
     mediaStream.connect(recorder);
     recorder.connect(context.destination);
     mediaStream.connect(context.destination);
-    // }
   } else {
     window.close();
   }
@@ -193,6 +155,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       break;
   }
 
-  sendResponse({});
+  // sendResponse({});
   return true;
 });
+
+function updateTranscriptionUI(text) {
+  const transcriptionContainer = document.getElementById("transcription-container");
+  transcriptionContainer.textContent = text;
+}

@@ -69,31 +69,17 @@ document.addEventListener("DOMContentLoaded", function () {
     // Get the current active tab
     const currentTab = await getCurrentTab();
 
-    // Send a message to the background script to start capturing
-    let host = "localhost";
-    let port = "9090";
-    const useCollaboraServer = useServerCheckbox.checked;
-    if (useCollaboraServer){
-      host = "transcription.kurg.org"
-      port = "7090"
-    }
-
     chrome.runtime.sendMessage(
-      { 
-        action: "startCapture", 
-        tabId: currentTab.id,
-        host: host,
-        port: port,
-        language: selectedLanguage,
-        task: selectedTask,
-        modelSize: selectedModelSize,
-        useVad: useVadCheckbox.checked,
-      }, () => {
-        // Update capturing state in storage and toggle the buttons
-        chrome.storage.local.set({ capturingState: { isCapturing: true } }, () => {
-          toggleCaptureButtons(true);
-        });
-      }
+        { 
+            action: "startCapture", 
+            tabId: currentTab.id,
+            revAiToken: '02YNHWnpptcf8S8gntcfKVdpO9aIMtTm1D2guAlsSzEJRbKZF0CGU7gIJsgHnY6nI4yi230f1wKfPFgaqo6jV4VQLOgC8' // You'll need to add a way to configure this
+        }, 
+        () => {
+            chrome.storage.local.set({ capturingState: { isCapturing: true } }, () => {
+                toggleCaptureButtons(true);
+            });
+        }
     );
   }
 
