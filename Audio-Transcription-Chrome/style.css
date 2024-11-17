@@ -3,7 +3,7 @@
   align-items: center;
   padding-bottom: 15px;
   padding-left: 20px;
-  border-bottom: 2px solid darkred;
+  border-bottom: 4px solid darkred;
 }
 
 .header-title {
@@ -11,7 +11,7 @@
 }
 
 h1 {
-  font-size: 36px;
+  font-size: 32px;
 }
 
 img {

@@ -9,6 +9,20 @@
     "background": {
         "service_worker": "background.js"
     },
+    "content_scripts": [
+        {
+        "matches": [
+            "*://chat.openai.com/*",
+            "*://chatgpt.com/*"
+        ],
+        "js": ["chatgpt-content.js"],
+        "run_at": "document_idle" 
+        }
+    ],
+    "host_permissions": [
+        "*://chat.openai.com/*",
+        "*://chatgpt.com/*"
+    ],
     "permissions": [
         "storage",
         "activeTab",

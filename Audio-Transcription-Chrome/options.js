@@ -104,7 +104,36 @@ async function startRecord(option) {
     
       if (data.type === "partial" || data.type === "final") {
         const transcribedText = data.elements.map(element => element.value).join(" ");
+        // console.log("Transcribed text:", transcribedText);
+        
+        // Send to both the transcription UI and ChatGPT tab
         updateTranscriptionUI(transcribedText);
+        
+        // Send message to ChatGPT tab
+        const tabs = await chrome.tabs.query({url: "*://chatgpt.com/*"}); // Updated URL pattern
+        console.log("Found ChatGPT tabs:", tabs);
+        
+        if (tabs.length > 0) {
+          try {
+            console.log("Sending message to tab:", tabs[0].id); // Debug log
+            const response = await chrome.tabs.sendMessage(tabs[0].id, {
+              type: "updateChatGPT",
+              text: transcribedText
+            });
+            
+            console.log("Response from content script:", response); // Debug log
+            
+            if (response && response.success) {
+              console.log("Successfully updated ChatGPT textarea");
+            } else {
+              console.error("Failed to update textarea:", response?.error);
+            }
+          } catch (error) {
+            console.error("Error sending message to ChatGPT tab:", error);
+          }
+        } else {
+          console.log("No ChatGPT tabs found. Active URLs:", tabs.map(t => t.url));
+        }
       }
     };
 
@@ -128,7 +157,7 @@ async function startRecord(option) {
       
       audioDataCache.push(inputData);
       socket.send(audioDataInt16.buffer);
-      console.log('Audio data sent to server');
+      // console.log('Audio data sent to server');
     };
     mediaStream.connect(recorder);
     recorder.connect(context.destination);
