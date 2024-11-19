@@ -80,7 +80,7 @@ async function startRecord(option) {
 
   if (stream) {
     stream.oninactive = () => {
-      window.close();
+      // window.close();
     };
 
     // Modified WebSocket connection for Rev AI
@@ -107,6 +107,12 @@ async function startRecord(option) {
         updateTranscriptionUI(transcribedText);
       }
     };
+
+    // Add close button to the page
+    const closeButton = document.createElement('button');
+    closeButton.textContent = 'Close Window';
+    closeButton.addEventListener('click', () => window.close());
+    document.body.appendChild(closeButton);
 
     const audioDataCache = [];
     const context = new AudioContext();
@@ -151,6 +157,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     case "start_capture":
       startRecord(data);
       break;
+      case "stop_capture":
+      // Get the current transcription and download it
+      chrome.storage.local.get(['currentTranscription'], (result) => {
+        if (result.currentTranscription) {
+          downloadTranscription(result.currentTranscription);
+        }
+      });
+      break;
     default:
       break;
   }
@@ -162,4 +176,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 function updateTranscriptionUI(text) {
   const transcriptionContainer = document.getElementById("transcription-container");
   transcriptionContainer.textContent = text;
+  chrome.storage.local.set({ currentTranscription: text });
+}
+
+function downloadTranscription(text) {
+  const blob = new Blob([text], { type: 'text/plain' });
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const filename = `transcription-${timestamp}.txt`;
+  
+  chrome.downloads.download({
+    url: URL.createObjectURL(blob),
+    filename: filename,
+    saveAs: false
+  });
 }

@@ -172,11 +172,19 @@ async function stopCapture() {
   const currentTabId = await getLocalStorageValue("currentTabId");
 
   if (optionTabId) {
-    res = await sendMessageToTab(currentTabId, {
+    // Send stop message to current tab
+    await sendMessageToTab(currentTabId, {
       type: "STOP",
       data: { currentTabId: currentTabId },
     });
-    await removeChromeTab(optionTabId);
+
+    // Send stop capture message to options page
+    await sendMessageToTab(optionTabId, {
+      type: "stop_capture"
+    });
+
+    // Don't remove the options tab
+    // await removeChromeTab(optionTabId);
   }
 }
 

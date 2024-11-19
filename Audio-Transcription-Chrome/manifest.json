@@ -13,7 +13,8 @@
         "storage",
         "activeTab",
         "tabCapture",
-        "scripting"
+        "scripting",
+        "downloads`"
     ],
     "icons": {
         "128":"icon128.png"
