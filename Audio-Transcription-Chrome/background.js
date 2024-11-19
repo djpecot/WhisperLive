@@ -172,19 +172,29 @@ async function stopCapture() {
   const currentTabId = await getLocalStorageValue("currentTabId");
 
   if (optionTabId) {
-    // Send stop message to current tab
-    await sendMessageToTab(currentTabId, {
-      type: "STOP",
-      data: { currentTabId: currentTabId },
-    });
+    try {
+      // Send stop message to current tab
+      await sendMessageToTab(currentTabId, {
+        type: "STOP",
+        data: { currentTabId: currentTabId },
+      });
 
-    // Send stop capture message to options page
-    await sendMessageToTab(optionTabId, {
-      type: "stop_capture"
-    });
+      // Send stop capture message to options page and wait for response
+      await sendMessageToTab(optionTabId, {
+        type: "stop_capture"
+      });
 
-    // Don't remove the options tab
-    // await removeChromeTab(optionTabId);
+      // Update popup UI
+      chrome.runtime.sendMessage({ 
+        action: "toggleCaptureButtons", 
+        isCapturing: false 
+      });
+
+      // Update storage
+      await setLocalStorageValue("capturingState", { isCapturing: false });
+    } catch (error) {
+      console.error("Error stopping capture:", error);
+    }
   }
 }
 

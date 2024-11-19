@@ -42,16 +42,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Function to handle the stop capture button click event
   function stopCapture() {
-    // Ignore click if the button is disabled
     if (stopButton.disabled) {
       return;
     }
-
-    // Send a message to the background script to stop capturing
+  
     chrome.runtime.sendMessage({ action: "stopCapture" }, () => {
-      // Update capturing state in storage and toggle the buttons
-      chrome.storage.local.set({ capturingState: { isCapturing: false } }, () => {
-        toggleCaptureButtons(false);
+      toggleCaptureButtons(false);
+      chrome.storage.local.set({ 
+        capturingState: { isCapturing: false } 
       });
     });
   }
@@ -76,8 +74,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     if (request.action === "toggleCaptureButtons") {
-      toggleCaptureButtons(false);
-      chrome.storage.local.set({ capturingState: { isCapturing: false } })
+      toggleCaptureButtons(request.isCapturing);
+      chrome.storage.local.set({ 
+        capturingState: { isCapturing: request.isCapturing } 
+      });
     }
   });
   

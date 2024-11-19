@@ -79,16 +79,31 @@ async function startRecord(option) {
   const uuid = generateUUID();
 
   if (stream) {
+    let socket;
+    let recorder;
+    let context;
+    let mediaStream;
     stream.oninactive = () => {
       // window.close();
     };
 
+    // Store references globally so we can stop them later
+    window.recordingSession = {
+      stream,
+      socket: null,
+      recorder: null,
+      context: null,
+      mediaStream: null,
+    };
+
     // Modified WebSocket connection for Rev AI
-    const socket = new WebSocket(
+    socket = new WebSocket(
       `wss://api.rev.ai/speechtotext/v1/stream?` +
       `access_token=${'02YNHWnpptcf8S8gntcfKVdpO9aIMtTm1D2guAlsSzEJRbKZF0CGU7gIJsgHnY6nI4yi230f1wKfPFgaqo6jV4VQLOgC8'}&` +
       `content_type=audio/x-raw;layout=interleaved;rate=16000;format=S16LE;channels=1`
       );
+
+    window.recordingSession.socket = socket;
 
     console.log('WebSocket connection created');
 
@@ -115,9 +130,13 @@ async function startRecord(option) {
     document.body.appendChild(closeButton);
 
     const audioDataCache = [];
-    const context = new AudioContext();
-    const mediaStream = context.createMediaStreamSource(stream);
-    const recorder = context.createScriptProcessor(4096, 1, 1);
+    context = new AudioContext();
+    mediaStream = context.createMediaStreamSource(stream);
+    recorder = context.createScriptProcessor(4096, 1, 1);
+
+    window.recordingSession.context = context;
+    window.recordingSession.mediaStream = mediaStream;
+    window.recordingSession.recorder = recorder;
 
     recorder.onaudioprocess = async (event) => {
       if (!context || !isServerReady) return;
@@ -144,6 +163,47 @@ async function startRecord(option) {
   }
 }
 
+// Add new function to stop recording
+function stopRecording() {
+  if (window.recordingSession) {
+    const { stream, socket, recorder, context, mediaStream } = window.recordingSession;
+
+    // Close WebSocket
+    if (socket) {
+      socket.close();
+    }
+
+    // Stop the audio processing
+    if (recorder) {
+      recorder.disconnect();
+    }
+
+    if (mediaStream) {
+      mediaStream.disconnect();
+    }
+
+    // Stop all tracks in the stream
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+
+    // Close audio context
+    if (context) {
+      context.close();
+    }
+
+    // Get the final transcription and download it
+    chrome.storage.local.get(['currentTranscription'], (result) => {
+      if (result.currentTranscription) {
+        downloadTranscription(result.currentTranscription);
+      }
+    });
+
+    // Clear the recording session
+    window.recordingSession = null;
+  }
+}
+
 /**
  * Listener for incoming messages from the extension's background script.
  * @param {Object} request - The message request object.
@@ -157,19 +217,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     case "start_capture":
       startRecord(data);
       break;
-      case "stop_capture":
-      // Get the current transcription and download it
-      chrome.storage.local.get(['currentTranscription'], (result) => {
-        if (result.currentTranscription) {
-          downloadTranscription(result.currentTranscription);
-        }
-      });
+    case "stop_capture":
+      stopRecording();
+      sendResponse({ status: "stopped" });
       break;
     default:
       break;
   }
 
-  // sendResponse({});
   return true;
 });
 
