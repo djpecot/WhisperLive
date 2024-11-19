@@ -114,12 +114,26 @@ async function startRecord(option) {
         console.log('WebSocket connection opened');
     };
 
+    let completeTranscript = '';
+    let currentPartial = '';
+
     socket.onmessage = async (event) => {
       const data = JSON.parse(event.data);
-    
-      if (data.type === "partial" || data.type === "final") {
-        const transcribedText = data.elements.map(element => element.value).join(" ");
-        updateTranscriptionUI(transcribedText);
+      const transcribedText = data.elements.map(element => element.value).join(" ");
+
+      if (data.type === "partial") {
+        // Update only the current partial segment
+        currentPartial = transcribedText;
+        // Display complete transcript plus current partial
+        updateTranscriptionUI(completeTranscript + ' ' + currentPartial);
+      } 
+      else if (data.type === "final") {
+        // Add the final segment to the complete transcript
+        completeTranscript = (completeTranscript + ' ' + transcribedText).trim();
+        // Reset current partial
+        currentPartial = '';
+        // Display complete transcript
+        updateTranscriptionUI(completeTranscript);
       }
     };
 
@@ -230,7 +244,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 function updateTranscriptionUI(text) {
   const transcriptionContainer = document.getElementById("transcription-container");
+  if (!transcriptionContainer) {
+    const container = document.createElement("div");
+    container.id = "transcription-container";
+    container.style.whiteSpace = "pre-wrap";
+    container.style.padding = "20px";
+    container.style.maxHeight = "500px";
+    container.style.overflowY = "auto";
+    document.body.appendChild(container);
+  }
+
   transcriptionContainer.textContent = text;
+  transcriptionContainer.scrollTop = transcriptionContainer.scrollHeight;
   chrome.storage.local.set({ currentTranscription: text });
 }
 
