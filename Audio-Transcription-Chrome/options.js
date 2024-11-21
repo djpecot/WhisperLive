@@ -123,13 +123,13 @@ async function startRecord(option) {
 
       if (data.type === "partial") {
         // Update only the current partial segment
-        currentPartial = transcribedText;
-        // Display complete transcript plus current partial
-        updateTranscriptionUI(completeTranscript + ' ' + currentPartial);
+        currentPartial = transcribedText.trim();
+        // Display complete transcript plus current partial, with single space
+        updateTranscriptionUI((completeTranscript + ' ' + currentPartial).replace(/\s+/g, ' ').trim());
       } 
       else if (data.type === "final") {
-        // Add the final segment to the complete transcript
-        completeTranscript = (completeTranscript + ' ' + transcribedText).trim();
+        // Add the final segment to the complete transcript, with single space
+        completeTranscript = (completeTranscript + ' ' + transcribedText).replace(/\s+/g, ' ').trim();
         // Reset current partial
         currentPartial = '';
         // Display complete transcript
